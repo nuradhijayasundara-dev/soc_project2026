@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        # Auth service: public routes, no JWT filter (login / register happen here)
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/**
+
+        # User service: protected
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - JwtAuthFilter
+
+        # Courier service: protected (Member 2, added in sprint 2)
+        - id: courier-service
+          uri: lb://COURIER-SERVICE
+          predicates:
+            - Path=/api/courier/**
+          filters:
+            - JwtAuthFilter
+
+        # Fleet service: protected (Member 3, added in sprint 2)
+        - id: fleet-service
+          uri: lb://FLEET-SERVICE
+          predicates:
+            - Path=/api/fleet/**
+          filters:
+            - JwtAuthFilter
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
