@@ -9,6 +9,8 @@ import TruckDetails from './pages/TruckDetails';
 import DriverAssignment from './pages/DriverAssignment';
 import TripCreate from './pages/TripCreate';
 import Drivers from './pages/Drivers';
+import GpsTracking from './pages/GpsTracking';
+import Availability from './pages/Availability';
 
 export default function App() {
   return (
@@ -29,8 +31,8 @@ export default function App() {
           <Route path="/drivers" element={<Drivers />} />
           <Route path="/trips" element={<DriverAssignment />} />
           <Route path="/trips/new" element={<TripCreate />} />
-          <Route path="/availability" element={<div>Truck availability screen goes here</div>} />
-          <Route path="/gps" element={<div>GPS tracking / map screen goes here</div>} />
+          <Route path="/availability" element={<Availability />} />
+          <Route path="/gps" element={<GpsTracking />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
