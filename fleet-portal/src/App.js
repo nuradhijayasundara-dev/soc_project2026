@@ -11,6 +11,7 @@ import TripCreate from './pages/TripCreate';
 import Drivers from './pages/Drivers';
 import GpsTracking from './pages/GpsTracking';
 import Availability from './pages/Availability';
+import BookingRequests from './pages/BookingRequests';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/trips" element={<DriverAssignment />} />
           <Route path="/trips/new" element={<TripCreate />} />
           <Route path="/availability" element={<Availability />} />
+          <Route path="/bookings" element={<BookingRequests />} />
           <Route path="/gps" element={<GpsTracking />} />
         </Route>
 

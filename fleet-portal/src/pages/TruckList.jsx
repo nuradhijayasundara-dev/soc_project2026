@@ -1,27 +1,37 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Table, TableHead, TableRow, TableCell, TableBody,
-  Paper, Chip, CircularProgress,
+  Paper, Chip, CircularProgress, Button,
 } from '@mui/material';
 import { getTrucks } from '../api/truckApi';
+import TruckRegisterDialog from '../components/TruckRegisterDialog';
 
 const statusColor = { AVAILABLE: 'success', ON_TRIP: 'info', MAINTENANCE: 'warning' };
 
 export default function TruckList() {
+  const navigate = useNavigate();
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  useEffect(() => {
+  const load = () => {
+    setLoading(true);
     getTrucks()
       .then(setTrucks)
       .catch(() => setError('Could not load trucks (is fleet-service running?)'))
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { load(); }, []);
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>Trucks</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" fontWeight={700}>Trucks</Typography>
+        <Button variant="contained" onClick={() => setDialogOpen(true)}>Register Truck</Button>
+      </Box>
 
       {loading && <CircularProgress />}
       {error && <Typography color="error">{error}</Typography>}
@@ -41,7 +51,12 @@ export default function TruckList() {
               {trucks.length === 0 ? (
                 <TableRow><TableCell colSpan={4}>No trucks registered yet.</TableCell></TableRow>
               ) : trucks.map((t) => (
-                <TableRow key={t.id}>
+                <TableRow
+                  key={t.id}
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/trucks/${t.id}`)}
+                >
                   <TableCell>{t.truckNo}</TableCell>
                   <TableCell>{t.capacityTon}</TableCell>
                   <TableCell>{t.truckType}</TableCell>
@@ -54,6 +69,12 @@ export default function TruckList() {
           </Table>
         </Paper>
       )}
+
+      <TruckRegisterDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onRegistered={() => { setDialogOpen(false); load(); }}
+      />
     </Box>
   );
 }

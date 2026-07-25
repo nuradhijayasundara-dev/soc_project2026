@@ -12,6 +12,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { logout } from '../api/authApi';
+import NotificationBell from './NotificationBell';
 
 const drawerWidth = 220;
 
@@ -38,10 +39,13 @@ export default function Layout() {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap>Backhaul-Match — Courier Portal</Typography>
-          <IconButton color="inherit" onClick={handleLogout} title="Logout">
-            <Avatar sx={{ width: 28, height: 28, mr: 1 }} />
-            <LogoutIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <NotificationBell />
+            <IconButton color="inherit" onClick={handleLogout} title="Logout">
+              <Avatar sx={{ width: 28, height: 28, mr: 1 }} />
+              <LogoutIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 

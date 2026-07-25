@@ -5,6 +5,7 @@ import {
   Stepper, Step, StepLabel, CircularProgress, Alert,
 } from '@mui/material';
 import { getShipmentById, getShipmentTracking, updateShipmentStatus } from '../api/shipmentApi';
+import RequestBackhaulDialog from '../components/RequestBackhaulDialog';
 
 const STATUS_FLOW = ['PENDING', 'MATCHED', 'IN_TRANSIT', 'DELIVERED'];
 
@@ -23,6 +24,7 @@ export default function ShipmentDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [matchDialogOpen, setMatchDialogOpen] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -58,12 +60,27 @@ export default function ShipmentDetails() {
   return (
     <Box>
       <Button component={Link} to="/shipments" sx={{ mb: 2 }}>&larr; Back to Shipments</Button>
-      <Typography variant="h5" fontWeight={700} gutterBottom>
-        Shipment {shipment.shipmentCode}
-        <Chip sx={{ ml: 2 }} label={shipment.status} color={statusColor[shipment.status] || 'default'} />
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h5" fontWeight={700}>
+          Shipment {shipment.shipmentCode}
+          <Chip sx={{ ml: 2 }} label={shipment.status} color={statusColor[shipment.status] || 'default'} />
+        </Typography>
 
-      <Paper sx={{ p: 3, mb: 3 }}>
+        {shipment.status === 'PENDING' && (
+          <Button variant="contained" color="secondary" onClick={() => setMatchDialogOpen(true)}>
+            Request Backhaul Transport
+          </Button>
+        )}
+      </Box>
+
+      <RequestBackhaulDialog
+        open={matchDialogOpen}
+        onClose={() => setMatchDialogOpen(false)}
+        shipment={shipment}
+        onMatched={(requestId) => navigate(`/matches/${requestId}`)}
+      />
+
+      <Paper sx={{ p: 3, mb: 3, mt: 2 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}><b>From:</b> {shipment.pickupLocation}</Grid>
           <Grid item xs={12} sm={6}><b>To:</b> {shipment.destination}</Grid>
