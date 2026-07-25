@@ -16,6 +16,7 @@ public class MatchingDtos {
             Long truckId,
             Long fleetCompanyId,
             String truckNo,
+            String truckType,
             String routeFrom,
             String routeTo,
             String availableFrom, // ISO string

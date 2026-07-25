@@ -36,9 +36,29 @@ public class MatchController {
         return ResponseEntity.ok(matchingService.getResults(id));
     }
 
-    // Courier operator clicks "Select" on a recommended truck
-    @PostMapping("/results/{id}/select")
-    public ResponseEntity<MatchResult> selectResult(@PathVariable Long id) {
-        return ResponseEntity.ok(matchingService.selectResult(id));
+    // "Courier Accepts" — Member 2's Accept Match button. Verifies + reserves
+    // truck capacity immediately (see MatchingService.acceptMatch) and notifies
+    // the fleet manager. Status becomes PENDING_CONFIRMATION.
+    @PostMapping("/results/{id}/accept-match")
+    public ResponseEntity<MatchResult> acceptMatch(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.acceptMatch(id, userId));
+    }
+
+    // Fleet Portal's "Booking Requests" page — everything awaiting this fleet manager's decision
+    @GetMapping("/bookings/pending")
+    public ResponseEntity<List<MatchResult>> getPendingBookings(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.getPendingBookingsForUser(userId));
+    }
+
+    // Step 2a: fleet manager accepts -> "Booking accepted" notification to the courier
+    @PostMapping("/results/{id}/accept")
+    public ResponseEntity<MatchResult> accept(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.acceptBooking(id));
+    }
+
+    // Step 2b: fleet manager declines -> "Booking rejected" notification to the courier
+    @PostMapping("/results/{id}/reject")
+    public ResponseEntity<MatchResult> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.rejectBooking(id));
     }
 }
