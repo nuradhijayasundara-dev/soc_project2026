@@ -23,11 +23,23 @@ public class CourierCompanyService {
     /** Creates the company on first use, or updates it if the operator already has one. */
     public CourierCompany registerOrUpdate(Long userId, CompanyRequest req) {
         CourierCompany company = repository.findByUserId(userId).orElseGet(CourierCompany::new);
+        boolean isNew = company.getId() == null;
+        if (isNew) {
+            company.setApprovalStatus(CourierCompany.ApprovalStatus.PENDING);
+        }
         company.setUserId(userId);
         company.setCompanyName(req.companyName());
         company.setRegistrationNo(req.registrationNo());
         company.setContactPhone(req.contactPhone());
         company.setAddress(req.address());
+        return repository.save(company);
+    }
+
+    /** Admin approval workflow — called by admin-service directly (Eureka name). */
+    public CourierCompany setApprovalStatus(Long id, CourierCompany.ApprovalStatus status) {
+        CourierCompany company = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Courier company not found"));
+        company.setApprovalStatus(status);
         return repository.save(company);
     }
 

@@ -20,13 +20,30 @@ public class FleetCompanyService {
                         "No fleet company registered for this account yet"));
     }
 
+    public FleetCompany getById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fleet company not found"));
+    }
+
     public FleetCompany registerOrUpdate(Long userId, CompanyRequest req) {
         FleetCompany company = repository.findByUserId(userId).orElseGet(FleetCompany::new);
+        boolean isNew = company.getId() == null;
+        if (isNew) {
+            company.setApprovalStatus(FleetCompany.ApprovalStatus.PENDING);
+        }
         company.setUserId(userId);
         company.setCompanyName(req.companyName());
         company.setRegistrationNo(req.registrationNo());
         company.setContactPhone(req.contactPhone());
         company.setAddress(req.address());
+        return repository.save(company);
+    }
+
+    /** Admin approval workflow — called by admin-service directly (Eureka name). */
+    public FleetCompany setApprovalStatus(Long id, FleetCompany.ApprovalStatus status) {
+        FleetCompany company = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fleet company not found"));
+        company.setApprovalStatus(status);
         return repository.save(company);
     }
 

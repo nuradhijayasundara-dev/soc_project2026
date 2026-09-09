@@ -20,3 +20,7 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
   instance:
     prefer-ip-address: true
+
+routing:
+  osrm:
+    base-url: ${ROUTING_OSRM_BASE_URL:http://osrm:5000}

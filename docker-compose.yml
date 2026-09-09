@@ -1,0 +1,226 @@
+# Brings up the whole platform: one MySQL instance (each service still gets
+# its own schema — createDatabaseIfNotExist=true + Hibernate ddl-auto=update
+# create them automatically on first connect, same as running locally, so no
+# separate init-SQL step is needed here), Eureka, the Gateway, all 10
+# microservices, the OSRM routing engine (with a pre-built Sri Lanka dataset),
+# and all 3 React portals served via nginx.
+#
+# Run: docker compose up --build
+# Then: Eureka dashboard  -> http://localhost:8761
+#       API Gateway       -> http://localhost:8080
+#       Courier Portal    -> http://localhost:3000
+#       Fleet Portal      -> http://localhost:3001
+#       Admin Portal      -> http://localhost:3002
+#
+# Note: Eureka takes a few seconds to come up, and services registering
+# before it's ready will just retry until it is — if something shows as
+# DOWN in the Eureka dashboard right after startup, give it ~30s and it
+# should self-heal. No manual restart should be needed, but `docker compose
+# restart <service>` fixes it instantly if it doesn't.
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [backhaul-net]
+
+  discovery-server:
+    build: ./backend/discovery-server
+    ports:
+      - "8761:8761"
+    networks: [backhaul-net]
+
+  auth-service:
+    build: ./backend/auth-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  user-service:
+    build: ./backend/user-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  courier-service:
+    build: ./backend/courier-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/courier_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  fleet-service:
+    build: ./backend/fleet-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/fleet_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  gps-service:
+    build: ./backend/gps-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gps_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  osrm:
+    build: ./osrm
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/route/v1/driving/79.8612,6.9271;80.6337,7.2906?overview=false"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [backhaul-net]
+
+  matching-service:
+    build: ./backend/matching-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+      osrm: { condition: service_healthy }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/matching_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      ROUTING_OSRM_BASE_URL: http://osrm:5000
+    networks: [backhaul-net]
+
+  notification-service:
+    build: ./backend/notification-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      # Email bonus stays off by default in Docker too — see notification-service/application.yml
+      NOTIFICATION_EMAIL_ENABLED: "false"
+    networks: [backhaul-net]
+
+  payment-service:
+    build: ./backend/payment-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  admin-service:
+    build: ./backend/admin-service
+    depends_on:
+      mysql: { condition: service_healthy }
+      discovery-server: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/admin_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  api-gateway:
+    build: ./backend/api-gateway
+    ports:
+      - "8085:8085"
+    depends_on:
+      discovery-server: { condition: service_started }
+      auth-service: { condition: service_started }
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+    networks: [backhaul-net]
+
+  courier-portal:
+    build:
+      context: ./frontend/courier-portal
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8085/api
+    ports:
+      - "3000:80"
+    depends_on: [api-gateway]
+    networks: [backhaul-net]
+
+  fleet-portal:
+    build:
+      context: ./frontend/fleet-portal
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8085/api
+        # Supply your own key to see the live GPS map — see frontend/fleet-portal/.env.example
+    ports:
+      - "3001:80"
+    depends_on: [api-gateway]
+    networks: [backhaul-net]
+
+  admin-portal:
+    build:
+      context: ./frontend/admin-portal
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8085/api
+    ports:
+      - "3002:80"
+    depends_on: [api-gateway]
+    networks: [backhaul-net]
+
+  login-portal:
+    build:
+      context: ./frontend/login-portal
+      args:
+        REACT_APP_API_BASE_URL: http://localhost:8085/api
+        REACT_APP_COURIER_PORTAL_URL: http://localhost:3000
+        REACT_APP_FLEET_PORTAL_URL: http://localhost:3001
+        REACT_APP_ADMIN_PORTAL_URL: http://localhost:3002
+    ports:
+      - "3004:80"
+    depends_on: [api-gateway]
+    networks: [backhaul-net]
+
+networks:
+  backhaul-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

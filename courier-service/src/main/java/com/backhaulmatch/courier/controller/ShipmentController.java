@@ -54,4 +54,11 @@ public class ShipmentController {
         Long companyId = companyService.resolveCompanyId(userId);
         return ResponseEntity.ok(shipmentService.getDashboardSummary(companyId));
     }
+
+    // "Courier Reports" page — total shipments, successful matches, cost savings
+    @GetMapping("/reports/summary")
+    public ResponseEntity<CourierReportSummary> reportSummary(@RequestHeader("X-User-Id") Long userId) {
+        Long companyId = companyService.resolveCompanyId(userId);
+        return ResponseEntity.ok(shipmentService.getReportSummary(userId, companyId));
+    }
 }

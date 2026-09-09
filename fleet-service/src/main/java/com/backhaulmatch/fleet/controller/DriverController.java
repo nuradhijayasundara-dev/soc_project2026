@@ -40,4 +40,17 @@ public class DriverController {
     public ResponseEntity<Driver> getById(@PathVariable Long id) {
         return ResponseEntity.ok(driverService.getById(id));
     }
+
+    // Driver App calls this right after login to find its own profile/status.
+    @GetMapping("/me")
+    public ResponseEntity<Driver> getMyProfile(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(driverService.getByUserId(userId));
+    }
+
+    // One-time "claim" — a driver logs in and links their account to the profile
+    // the fleet manager registered for them (matched by driverId, e.g. shared via SMS/email).
+    @PatchMapping("/{id}/link-account")
+    public ResponseEntity<Driver> linkAccount(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(driverService.linkAccount(id, userId));
+    }
 }

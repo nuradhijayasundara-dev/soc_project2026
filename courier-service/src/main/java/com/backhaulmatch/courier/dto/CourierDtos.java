@@ -31,22 +31,35 @@ public class CourierDtos {
     // Used when creating a shipment: either pass an existing customerId, or
     // inline "newCustomer" details and inline "receiver" details in one call —
     // matches the "New Shipment Request" form in the interface map (pickup/delivery/parcel).
+    // Coordinate + routing fields (pickupLatitude/pickupLongitude/.../distanceKm/estimatedDuration)
+    // are filled in by the frontend LocationPicker + local OSRM route and are optional for
+    // backwards compatibility.
     public record CreateShipmentRequest(
             Long customerId,
             CustomerRequest newCustomer,
             @NotNull ReceiverRequest receiver,
             @NotBlank String pickupLocation,
+            String pickupName,
+            Double pickupLatitude,
+            Double pickupLongitude,
             @NotNull LocalDateTime pickupDatetime,
             @NotBlank String destination,
+            String destinationName,
+            Double destinationLatitude,
+            Double destinationLongitude,
             LocalDate deliveryDeadline,
             BigDecimal weightKg,
             String dimensions,
             String parcelType,
-            String remarks
+            String requiredVehicleType, // STANDARD | REFRIGERATED | FLATBED | BOX_TRUCK | TANKER
+            String priority,            // NORMAL | PRIORITY | URGENT
+            String remarks,
+            BigDecimal distanceKm,
+            String estimatedDuration
     ) {}
 
     public record StatusUpdateRequest(
-            @NotBlank String status, // PENDING | MATCHED | IN_TRANSIT | DELIVERED | CANCELLED
+            @NotBlank String status, // see Shipment.Status enum
             String location
     ) {}
 
@@ -55,5 +68,17 @@ public class CourierDtos {
             long matchedShipments,
             long inTransit,
             long delivered
+    ) {}
+
+    // "Courier Reports": total shipments, successful matches, cost savings.
+    // Shipment counts are this service's own SQL COUNT queries; the other two
+    // figures are fetched from matching-service and payment-service, each
+    // computed there the same way (SQL aggregates, no shared report table).
+    public record CourierReportSummary(
+            long totalShipments,
+            long deliveredShipments,
+            long cancelledShipments,
+            long successfulMatches,
+            java.math.BigDecimal costSavings
     ) {}
 }

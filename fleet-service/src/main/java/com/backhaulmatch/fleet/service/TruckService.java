@@ -1,5 +1,6 @@
 package com.backhaulmatch.fleet.service;
 
+import com.backhaulmatch.fleet.client.MatchingServiceClient;
 import com.backhaulmatch.fleet.dto.FleetDtos.AvailabilityRequest;
 import com.backhaulmatch.fleet.dto.FleetDtos.TruckRequest;
 import com.backhaulmatch.fleet.entity.Truck;
@@ -19,6 +20,7 @@ public class TruckService {
 
     private final TruckRepository truckRepository;
     private final TruckAvailabilityRepository availabilityRepository;
+    private final MatchingServiceClient matchingServiceClient;
 
     public List<Truck> listForCompany(Long fleetCompanyId) {
         return truckRepository.findByFleetCompanyId(fleetCompanyId);
@@ -57,7 +59,17 @@ public class TruckService {
         availability.setRouteTo(req.routeTo());
         availability.setAvailableFrom(req.availableFrom());
         availability.setAvailableCapacityTon(req.availableCapacityTon());
+        availability.setTripType(req.tripType() != null
+                ? TruckAvailability.TripType.valueOf(req.tripType().toUpperCase())
+                : TruckAvailability.TripType.BACKHAUL);
         availability.setStatus(TruckAvailability.Status.AVAILABLE);
-        return availabilityRepository.save(availability);
+        TruckAvailability saved = availabilityRepository.save(availability);
+
+        // A new backhaul slot is up — ask matching-service to reconsider every
+        // WAITING_FOR_MATCH shipment right now, exactly like the quick-add flow
+        // (the scheduled rechecker is the fallback if this push is ever missed).
+        matchingServiceClient.triggerWaitingRecheck();
+
+        return saved;
     }
 }

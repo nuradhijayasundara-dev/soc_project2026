@@ -25,4 +25,21 @@ public class CourierServiceClient {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shipment " + shipmentId + " does not exist");
         }
     }
+
+    /**
+     * Advances the shipment through its lifecycle as the matching/booking flow
+     * progresses (MATCHING, MATCH_FOUND, BOOKING_PENDING, CONFIRMED, ...).
+     * Best-effort: a failed status update shouldn't roll back the underlying
+     * business action — it's a state display concern.
+     */
+    public void updateShipmentStatus(Long shipmentId, String status, String location) {
+        try {
+            Map<String, Object> body = new java.util.HashMap<>();
+            body.put("status", status);
+            body.put("location", location);
+            restTemplate.patchForObject(BASE_URL + shipmentId + "/status", body, Void.class);
+        } catch (Exception e) {
+            // swallowed — see Javadoc
+        }
+    }
 }

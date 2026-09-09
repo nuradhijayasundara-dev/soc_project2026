@@ -15,6 +15,12 @@ public class Driver {
     @Column(name = "fleet_company_id", nullable = false)
     private Long fleetCompanyId;
 
+    // Links this driver record to their login in auth_db.users (role DRIVER).
+    // Set by the fleet manager when registering the driver, or via the "claim" endpoint
+    // the first time the driver logs into the mobile app.
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(nullable = false)
     private String fullName;
 

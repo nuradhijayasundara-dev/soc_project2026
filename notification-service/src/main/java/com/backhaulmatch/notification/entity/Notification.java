@@ -46,6 +46,9 @@ public class Notification {
     }
 
     public enum Type {
-        MATCH_FOUND, BOOKING_ACCEPTED, BOOKING_REJECTED, SHIPMENT_STATUS
+        // MATCH_FOUND, BOOKING_REQUESTED, BOOKING_ACCEPTED, BOOKING_REJECTED,
+     // NO_MATCH (the waiting window closed without a truck — settled, stop waiting),
+     // SHIPMENT_STATUS
+     MATCH_FOUND, BOOKING_REQUESTED, BOOKING_ACCEPTED, BOOKING_REJECTED, NO_MATCH, SHIPMENT_STATUS
     }
 }

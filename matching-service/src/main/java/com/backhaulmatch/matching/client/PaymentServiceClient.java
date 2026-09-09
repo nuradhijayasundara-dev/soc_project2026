@@ -23,9 +23,11 @@ public class PaymentServiceClient {
 
     private final RestTemplate restTemplate;
     private static final String CREATE_INVOICE_URL = "http://PAYMENT-SERVICE/api/payment/invoices/internal";
+    private static final String ESTIMATE_URL = "http://PAYMENT-SERVICE/api/payment/pricing/estimate/internal";
 
     public void createInvoice(Long shipmentId, Long matchResultId, Long courierUserId, Long fleetCompanyId,
-                               String truckNo, Double distanceKm, BigDecimal weightKg) {
+                               String truckNo, Double distanceKm, BigDecimal weightKg,
+                               String vehicleType, String priority) {
         try {
             Map<String, Object> body = new HashMap<>();
             body.put("shipmentId", shipmentId);
@@ -35,9 +37,36 @@ public class PaymentServiceClient {
             body.put("truckNo", truckNo);
             body.put("distanceKm", distanceKm);
             body.put("weightKg", weightKg);
+            body.put("vehicleType", vehicleType);
+            body.put("priority", priority);
             restTemplate.postForObject(CREATE_INVOICE_URL, body, Void.class);
         } catch (Exception e) {
             log.warn("Could not create invoice for shipment {}: {}", shipmentId, e.getMessage());
+        }
+    }
+
+    /**
+     * Authoritative "backhaul" price for a candidate — always applies the
+     * empty-return-leg discount. Falls back to null so matching can keep its
+     * compiled-in estimate if payment-service is unreachable.
+     */
+    @SuppressWarnings("unchecked")
+    public java.math.BigDecimal estimatePrice(Double distanceKm, BigDecimal weightKg,
+                                              String vehicleType, String priority) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("distanceKm", distanceKm);
+            body.put("weightKg", weightKg);
+            body.put("vehicleType", vehicleType);
+            body.put("priority", priority);
+            body.put("backhaul", true);
+            Map<String, Object> result = restTemplate.postForObject(ESTIMATE_URL, body, Map.class);
+            if (result == null) return null;
+            Map<String, Object> breakdown = (Map<String, Object>) result.get("breakdown");
+            return breakdown == null ? null : new BigDecimal(breakdown.get("estimatedAmount").toString());
+        } catch (Exception e) {
+            log.warn("Could not estimate price for match: {}", e.getMessage());
+            return null;
         }
     }
 }

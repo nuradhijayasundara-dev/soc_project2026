@@ -1,0 +1,6 @@
+com\backhaulmatch\gateway\config\SecurityConfig.class
+com\backhaulmatch\gateway\config\JwtAuthFilter.class
+com\backhaulmatch\gateway\config\ApiAuditFilter.class
+com\backhaulmatch\gateway\config\CorsConfig.class
+com\backhaulmatch\gateway\config\JwtAuthFilter$Config.class
+com\backhaulmatch\gateway\ApiGatewayApplication.class

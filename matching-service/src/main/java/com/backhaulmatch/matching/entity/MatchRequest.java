@@ -33,6 +33,19 @@ public class MatchRequest {
 
     private BigDecimal weightKg;
 
+    // What the courier asked for — required vehicle type and priority are
+    // captured here so scoring/estimating doesn't need another round trip,
+    // and so admin can later pre-filter fleet trucks by type if wanted.
+    private String requiredVehicleType;
+    private String priority;
+
+    // Snapshot of the shipment's pickup time. Used for date/time compatibility
+    // when matching against truck availability, and as the expiry signal for a
+    // WAITING_FOR_MATCH request — once the pickup time has passed with no truck
+    // found, waiting is pointless and the request is settled.
+    @Column(name = "pickup_datetime")
+    private LocalDateTime pickupDatetime;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.PENDING;
@@ -47,8 +60,10 @@ public class MatchRequest {
 
     public enum Status {
         PENDING,   // request created, results generated, awaiting selection
+        MATCH_FOUND, // engine found candidate trucks (results list is populated)
         MATCHED,   // a result has been selected
-        NO_MATCH,  // matching ran but found nothing suitable
+        WAITING_FOR_MATCH, // matching ran but found nothing — kept active for later rechecks
+        NO_MATCH,  // wait window elapsed (expired) with no suitable truck found
         CANCELLED
     }
 }

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -25,6 +26,19 @@ public class InvoiceController {
     @PostMapping("/invoices/internal")
     public ResponseEntity<Invoice> createInvoice(@Valid @RequestBody CreateInvoiceRequest request) {
         return ResponseEntity.ok(invoiceService.createInvoice(request));
+    }
+
+    // "Before you commit" price estimate — shown in the courier shipment form and
+    // used by matching-service for each recommendation. Read-only, no side effects.
+    @PostMapping("/pricing/estimate")
+    public ResponseEntity<java.util.Map<String, Object>> estimate(@Valid @RequestBody PricingEstimateRequest request) {
+        return ResponseEntity.ok(invoiceService.estimate(request));
+    }
+
+    // Same estimate, for other services calling by Eureka name (no Gateway).
+    @PostMapping("/pricing/estimate/internal")
+    public ResponseEntity<java.util.Map<String, Object>> estimateInternal(@Valid @RequestBody PricingEstimateRequest request) {
+        return ResponseEntity.ok(invoiceService.estimate(request));
     }
 
     // Courier Portal's "Invoices" page — cost display + payment status
@@ -68,5 +82,12 @@ public class InvoiceController {
     @GetMapping("/reports/courier-summary")
     public ResponseEntity<CourierCostSummaryResponse> courierCostSummary(@RequestParam Long courierUserId) {
         return ResponseEntity.ok(invoiceService.getCourierCostSummary(courierUserId));
+    }
+
+    // Fleet dashboard "Revenue (MTD)" — called directly by fleet-service (Eureka
+    // name, not through the Gateway) so the dashboard summary is assembled in one round trip.
+    @GetMapping("/reports/fleet/mtd")
+    public ResponseEntity<BigDecimal> fleetMonthToDateRevenue(@RequestParam Long fleetCompanyId) {
+        return ResponseEntity.ok(invoiceService.getMonthToDateRevenue(fleetCompanyId));
     }
 }

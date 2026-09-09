@@ -25,4 +25,11 @@ public class FleetCompanyController {
                                                            @Valid @RequestBody CompanyRequest request) {
         return ResponseEntity.ok(companyService.registerOrUpdate(userId, request));
     }
+
+    // Called directly by matching-service (Eureka name, not through the Gateway) to resolve
+    // which user owns a fleet company — e.g. so a "booking requested" notification reaches them.
+    @GetMapping("/{id}")
+    public ResponseEntity<FleetCompany> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(companyService.getById(id));
+    }
 }

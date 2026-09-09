@@ -15,4 +15,13 @@ public class ReportDtos {
             long successfulBookings,
             BigDecimal totalCapacityUtilizedTon
     ) {}
+
+    // "Admin Dashboard" — consumed by admin-service. "Total bookings" counts every
+    // match_result a courier actually acted on (pending confirmation or accepted).
+    public record AdminSummaryResponse(
+            long totalMatches,
+            long totalBookings,
+            long successfulBookings,
+            BigDecimal totalCapacityUtilizedTon
+    ) {}
 }

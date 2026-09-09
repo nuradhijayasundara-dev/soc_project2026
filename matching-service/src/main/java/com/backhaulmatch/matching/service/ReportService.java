@@ -1,6 +1,7 @@
 package com.backhaulmatch.matching.service;
 
 import com.backhaulmatch.matching.dto.ReportDtos.CourierMatchSummaryResponse;
+import com.backhaulmatch.matching.dto.ReportDtos.AdminSummaryResponse;
 import com.backhaulmatch.matching.dto.ReportDtos.PlatformSummaryResponse;
 import com.backhaulmatch.matching.entity.CapacityReservation;
 import com.backhaulmatch.matching.entity.MatchRequest;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Every figure here comes straight from a SQL aggregate query (COUNT/SUM) run
@@ -41,5 +43,18 @@ public class ReportService {
         if (utilized == null) utilized = BigDecimal.ZERO;
 
         return new PlatformSummaryResponse(totalMatches, successfulBookings, utilized);
+    }
+
+    /** Admin Dashboard feed — total bookings includes pending + accepted results. */
+    public AdminSummaryResponse getAdminSummary() {
+        long totalMatches = matchRequestRepository.count();
+        long totalBookings = matchResultRepository.countByStatusIn(List.of(
+                MatchResult.Status.PENDING_CONFIRMATION, MatchResult.Status.ACCEPTED));
+        long successfulBookings = matchResultRepository.countByStatus(MatchResult.Status.ACCEPTED);
+
+        BigDecimal utilized = reservationRepository.sumReservedCapacityTonByStatus(CapacityReservation.Status.CONFIRMED);
+        if (utilized == null) utilized = BigDecimal.ZERO;
+
+        return new AdminSummaryResponse(totalMatches, totalBookings, successfulBookings, utilized);
     }
 }

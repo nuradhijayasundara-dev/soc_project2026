@@ -17,9 +17,12 @@ public class MatchingDtos {
             Long fleetCompanyId,
             String truckNo,
             String truckType,
+            String truckStatus,       // AVAILABLE / ON_TRIP / MAINTENANCE
             String routeFrom,
             String routeTo,
-            String availableFrom, // ISO string
-            java.math.BigDecimal availableCapacityTon
+            String availableFrom,   // ISO string
+            String expectedArrival, // ISO string — when the truck is expected at routeTo
+            java.math.BigDecimal availableCapacityTon,
+            String availabilityStatus  // AVAILABLE / BOOKED / EXPIRED
     ) {}
 }

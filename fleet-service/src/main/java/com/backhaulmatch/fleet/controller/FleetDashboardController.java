@@ -1,7 +1,11 @@
 package com.backhaulmatch.fleet.controller;
 
+import com.backhaulmatch.fleet.client.PaymentServiceClient;
 import com.backhaulmatch.fleet.dto.FleetDtos.DashboardSummary;
+import com.backhaulmatch.fleet.entity.Driver;
+import com.backhaulmatch.fleet.entity.Trip;
 import com.backhaulmatch.fleet.entity.Truck;
+import com.backhaulmatch.fleet.repository.DriverRepository;
 import com.backhaulmatch.fleet.repository.TripRepository;
 import com.backhaulmatch.fleet.repository.TruckRepository;
 import com.backhaulmatch.fleet.service.FleetCompanyService;
@@ -23,24 +27,30 @@ public class FleetDashboardController {
 
     private final FleetCompanyService companyService;
     private final TruckRepository truckRepository;
+    private final DriverRepository driverRepository;
     private final TripRepository tripRepository;
+    private final PaymentServiceClient paymentServiceClient;
 
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummary> summary(@RequestHeader("X-User-Id") Long userId) {
         Long companyId = companyService.resolveCompanyId(userId);
         List<Truck> trucks = truckRepository.findByFleetCompanyId(companyId);
 
-        long trucksOnline = trucks.size();
-        BigDecimal availableCapacity = trucks.stream()
-                .filter(t -> t.getStatus() == Truck.Status.AVAILABLE)
-                .map(Truck::getCapacityTon)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long totalTrucks = trucks.size();
+
+        // "Active" drivers = currently out on a trip (ON_TRIP), not idle/off-duty.
+        long activeDrivers = driverRepository
+                .findByFleetCompanyIdAndStatus(companyId, Driver.Status.ON_TRIP)
+                .size();
 
         List<Long> truckIds = trucks.stream().map(Truck::getId).collect(Collectors.toList());
-        long activeBookings = tripRepository.findByTruckIdInOrderByStartTimeDesc(truckIds).stream()
-                .filter(t -> t.getStatus().name().equals("SCHEDULED") || t.getStatus().name().equals("IN_PROGRESS"))
+        long activeTrips = tripRepository.findByTruckIdInOrderByStartTimeDesc(truckIds).stream()
+                .filter(t -> t.getStatus() == Trip.Status.SCHEDULED
+                        || t.getStatus() == Trip.Status.IN_PROGRESS)
                 .count();
 
-        return ResponseEntity.ok(new DashboardSummary(trucksOnline, availableCapacity, activeBookings));
+        BigDecimal revenueMtd = paymentServiceClient.getMonthToDateRevenue(companyId);
+
+        return ResponseEntity.ok(new DashboardSummary(totalTrucks, activeDrivers, activeTrips, revenueMtd));
     }
 }

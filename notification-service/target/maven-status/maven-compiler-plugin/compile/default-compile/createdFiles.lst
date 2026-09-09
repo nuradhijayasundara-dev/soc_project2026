@@ -1,0 +1,12 @@
+com\backhaulmatch\notification\NotificationServiceApplication.class
+com\backhaulmatch\notification\config\RestTemplateConfig.class
+com\backhaulmatch\notification\entity\Notification.class
+com\backhaulmatch\notification\dto\NotificationDtos.class
+com\backhaulmatch\notification\entity\Notification$Type.class
+com\backhaulmatch\notification\controller\NotificationController.class
+com\backhaulmatch\notification\service\NotificationService.class
+com\backhaulmatch\notification\client\AuthServiceClient.class
+com\backhaulmatch\notification\dto\NotificationDtos$UnreadCountResponse.class
+com\backhaulmatch\notification\repository\NotificationRepository.class
+com\backhaulmatch\notification\dto\NotificationDtos$CreateNotificationRequest.class
+com\backhaulmatch\notification\service\EmailService.class

@@ -29,13 +29,30 @@ public class DriverService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Driver not found"));
     }
 
+    public Driver getByUserId(Long userId) {
+        return repository.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No driver profile is linked to this account yet — ask your fleet manager to link it"));
+    }
+
     public Driver register(Long fleetCompanyId, DriverRequest req) {
         Driver driver = new Driver();
         driver.setFleetCompanyId(fleetCompanyId);
         driver.setFullName(req.fullName());
         driver.setPhone(req.phone());
         driver.setLicenseNo(req.licenseNo());
+        driver.setUserId(req.userId());
         driver.setStatus(Driver.Status.AVAILABLE);
+        return repository.save(driver);
+    }
+
+    /** Lets a logged-in DRIVER account claim an unclaimed driver record by its id. */
+    public Driver linkAccount(Long driverId, Long userId) {
+        Driver driver = getById(driverId);
+        if (driver.getUserId() != null && !driver.getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "This driver profile is already linked to another account");
+        }
+        driver.setUserId(userId);
         return repository.save(driver);
     }
 

@@ -1,5 +1,7 @@
 package com.backhaulmatch.auth.entity;
 
+import org.hibernate.annotations.ColumnDefault;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,6 +36,11 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @ColumnDefault("'APPROVED'")
+    private ApprovalStatus approvalStatus = ApprovalStatus.APPROVED;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,5 +51,9 @@ public class User {
 
     public enum Role {
         ADMIN, COURIER_OPERATOR, FLEET_MANAGER, DRIVER
+    }
+
+    public enum ApprovalStatus {
+        PENDING, APPROVED, REJECTED
     }
 }

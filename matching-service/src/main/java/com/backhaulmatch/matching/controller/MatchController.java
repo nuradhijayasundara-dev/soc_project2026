@@ -30,6 +30,22 @@ public class MatchController {
         return ResponseEntity.ok(matchingService.getRequest(id));
     }
 
+    // "Try Again" on a NO_MATCH / still-searching screen —
+    // re-runs the engine for the same shipment without recreating it.
+    @PostMapping("/requests/{id}/rerun")
+    public ResponseEntity<MatchRequest> rerun(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.rerun(id, userId));
+    }
+
+    // Waiting-for-Match trigger: called by fleet-service the instant a fleet
+    // manager publishes new availability, so every WAITING_FOR_MATCH shipment
+    // is immediately reconsidered against the new truck. Also hit by the
+    // scheduled poller's fallback. Returns how many shipments just matched.
+    @PostMapping("/waiting/recheck")
+    public ResponseEntity<Integer> recheckWaiting() {
+        return ResponseEntity.ok(matchingService.recheckWaitingMatches());
+    }
+
     // "4. MATCH RESULTS INTERFACE" — the ranked list of candidate trucks
     @GetMapping("/requests/{id}/results")
     public ResponseEntity<List<MatchResult>> getResults(@PathVariable Long id) {

@@ -1,13 +1,39 @@
 server:
-  port: 8080
+  port: 8085
 
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
-        # Auth service: public routes, no JWT filter (login / register happen here)
+
+        # Auth service internal endpoints: service-to-service calls go straight
+        # to AUTH-SERVICE by Eureka name (bypassing this Gateway entirely), so
+        # making these JWT-protected here only stops public browsers from
+        # reaching them — it can't break anything that legitimately uses them.
+        - id: auth-service-internal
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/api/auth/internal/**
+          filters:
+            - JwtAuthFilter
+
+        # Auth service: public routes (login/register)
         - id: auth-service
           uri: lb://AUTH-SERVICE
           predicates:
@@ -21,7 +47,7 @@ spring:
           filters:
             - JwtAuthFilter
 
-        # Courier service: protected (Member 2, added in sprint 2)
+        # Courier service: protected
         - id: courier-service
           uri: lb://COURIER-SERVICE
           predicates:
@@ -29,7 +55,7 @@ spring:
           filters:
             - JwtAuthFilter
 
-        # Fleet service: protected (Member 3, added in sprint 2)
+        # Fleet service: protected
         - id: fleet-service
           uri: lb://FLEET-SERVICE
           predicates:
@@ -37,9 +63,52 @@ spring:
           filters:
             - JwtAuthFilter
 
+        # GPS Tracking service: protected
+        - id: gps-service
+          uri: lb://GPS-SERVICE
+          predicates:
+            - Path=/api/gps/**
+          filters:
+            - JwtAuthFilter
+
+        # Matching service: protected
+        - id: matching-service
+          uri: lb://MATCHING-SERVICE
+          predicates:
+            - Path=/api/matching/**
+          filters:
+            - JwtAuthFilter
+
+        # Notification service: protected
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - JwtAuthFilter
+
+        # Payment service: protected
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/api/payment/**
+          filters:
+            - JwtAuthFilter
+
+        # Admin service: protected (controllers also enforce ADMIN role)
+        - id: admin-service
+          uri: lb://ADMIN-SERVICE
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - JwtAuthFilter
+
+
+
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
   instance:
     prefer-ip-address: true

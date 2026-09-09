@@ -15,12 +15,28 @@ public class PaymentDtos {
             @NotNull Long fleetCompanyId,
             String truckNo,
             Double distanceKm,
-            BigDecimal weightKg
+            BigDecimal weightKg,
+            String vehicleType,
+            String priority
     ) {}
 
     // "Payment API" — courier pays an invoice (simulated, no real gateway).
     public record PayInvoiceRequest(
             @NotBlank String method // CARD | BANK_TRANSFER | CASH
+    ) {}
+
+    // "Before you commit" price estimate — the courier portal shows this while
+    // filling in the shipment form (vehicle type + priority + weight + route).
+    public record PricingEstimateRequest(
+            Double distanceKm,
+            BigDecimal weightKg,
+            String vehicleType,   // STANDARD | REFRIGERATED | FLATBED | BOX_TRUCK | TANKER
+            String priority,      // NORMAL | PRIORITY | URGENT
+            Boolean backhaul      // true -> "empty return leg" discount applies
+    ) {}
+
+    public record PricingEstimateResponse(
+            java.util.Map<String, Object> breakdown
     ) {}
 
     // "Courier Reports" — cost savings piece. Reused by courier-service's report endpoint.

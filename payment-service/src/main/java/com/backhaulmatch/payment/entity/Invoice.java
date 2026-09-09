@@ -34,6 +34,8 @@ public class Invoice {
     private String truckNo;
     private Double distanceKm;
     private BigDecimal weightKg;
+    private String vehicleType;
+    private String priority;
 
     @Column(nullable = false)
     private BigDecimal amount;

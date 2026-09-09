@@ -3,6 +3,7 @@ package com.backhaulmatch.payment.service;
 import com.backhaulmatch.payment.dto.PaymentDtos.CourierCostSummaryResponse;
 import com.backhaulmatch.payment.dto.PaymentDtos.CreateInvoiceRequest;
 import com.backhaulmatch.payment.dto.PaymentDtos.PayInvoiceRequest;
+import com.backhaulmatch.payment.dto.PaymentDtos.PricingEstimateRequest;
 import com.backhaulmatch.payment.dto.PaymentDtos.RevenueSummaryResponse;
 import com.backhaulmatch.payment.entity.Invoice;
 import com.backhaulmatch.payment.entity.Payment;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +42,10 @@ public class InvoiceService {
         invoice.setTruckNo(req.truckNo());
         invoice.setDistanceKm(req.distanceKm());
         invoice.setWeightKg(req.weightKg());
-        invoice.setAmount(pricingService.calculateCost(req.distanceKm(), req.weightKg()));
+        invoice.setVehicleType(req.vehicleType());
+        invoice.setPriority(req.priority());
+        invoice.setAmount(pricingService.calculateCost(
+                req.distanceKm(), req.weightKg(), req.vehicleType(), req.priority(), true));
         invoice.setStatus(Invoice.Status.PENDING);
         return invoiceRepository.save(invoice);
     }
@@ -48,6 +53,13 @@ public class InvoiceService {
     public Invoice getById(Long id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found"));
+    }
+
+    /** "Before you commit" estimate — no persistence, no side effects. */
+    public java.util.Map<String, Object> estimate(PricingEstimateRequest req) {
+        boolean backhaul = Boolean.TRUE.equals(req.backhaul());
+        return pricingService.estimateBreakdown(
+                req.distanceKm(), req.weightKg(), req.vehicleType(), req.priority(), backhaul);
     }
 
     public List<Invoice> listForCourier(Long courierUserId) {
@@ -134,6 +146,14 @@ public class InvoiceService {
                 paidRevenue == null ? BigDecimal.ZERO : paidRevenue,
                 pendingRevenue == null ? BigDecimal.ZERO : pendingRevenue
         );
+    }
+
+    /** Fleet dashboard "Revenue (MTD)" — sum of PAID invoices created since the 1st of this month. */
+    public BigDecimal getMonthToDateRevenue(Long fleetCompanyId) {
+        LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        BigDecimal mtd = invoiceRepository.sumAmountByFleetCompanyIdAndStatusAfter(
+                fleetCompanyId, Invoice.Status.PAID, monthStart);
+        return mtd == null ? BigDecimal.ZERO : mtd;
     }
 
     private String nextInvoiceNo() {

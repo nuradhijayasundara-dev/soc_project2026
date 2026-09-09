@@ -5,6 +5,7 @@ import com.backhaulmatch.fleet.dto.FleetDtos.CapacityVerificationResponse;
 import com.backhaulmatch.fleet.dto.FleetDtos.QuickAvailabilityRequest;
 import com.backhaulmatch.fleet.entity.Truck;
 import com.backhaulmatch.fleet.entity.TruckAvailability;
+import com.backhaulmatch.fleet.client.MatchingServiceClient;
 import com.backhaulmatch.fleet.repository.TruckAvailabilityRepository;
 import com.backhaulmatch.fleet.repository.TruckRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class AvailabilityService {
 
     private final TruckAvailabilityRepository availabilityRepository;
     private final TruckRepository truckRepository;
+    private final MatchingServiceClient matchingServiceClient;
 
     /** "Availability" page: every posting across all of this fleet company's trucks. */
     public List<TruckAvailability> listForCompany(Long fleetCompanyId) {
@@ -41,13 +43,30 @@ public class AvailabilityService {
 
         TruckAvailability availability = new TruckAvailability();
         availability.setTruckId(truck.getId());
+        availability.setDriverId(req.driverId());
         availability.setRouteFrom(req.routeFrom());
         availability.setRouteTo(req.returnDestination());
+        availability.setStartLocationName(req.startLocationName());
+        availability.setStartLatitude(req.startLatitude());
+        availability.setStartLongitude(req.startLongitude());
+        availability.setDestinationName(req.destinationName());
+        availability.setDestinationLatitude(req.destinationLatitude());
+        availability.setDestinationLongitude(req.destinationLongitude());
+        availability.setDistanceKm(req.distanceKm());
+        availability.setEstimatedDuration(req.estimatedDuration());
         availability.setAvailableFrom(req.availableFrom());
+        availability.setExpectedArrival(req.expectedArrival());
         availability.setAvailableCapacityTon(req.availableCapacityTon());
         availability.setTripType(TruckAvailability.TripType.BACKHAUL);
         availability.setStatus(TruckAvailability.Status.AVAILABLE);
-        return availabilityRepository.save(availability);
+        TruckAvailability saved = availabilityRepository.save(availability);
+
+        // A new backhaul slot is up — ask matching-service to reconsider every
+        // WAITING_FOR_MATCH shipment right now (the scheduled rechecker is the
+        // fallback if this push is ever missed). Best-effort, never blocks.
+        matchingServiceClient.triggerWaitingRecheck();
+
+        return saved;
     }
 
     /** Cross-company search — called directly by matching-service (service-to-service, not via Gateway). */
@@ -66,7 +85,10 @@ public class AvailabilityService {
                     a.getId(), a.getTruckId(), truck != null ? truck.getFleetCompanyId() : null,
                     truck != null ? truck.getTruckNo() : null,
                     truck != null ? truck.getTruckType() : null,
-                    a.getRouteFrom(), a.getRouteTo(), a.getAvailableFrom(), a.getAvailableCapacityTon()
+                    truck != null ? truck.getStatus().name() : null,
+                    a.getRouteFrom(), a.getRouteTo(), a.getAvailableFrom(), a.getExpectedArrival(),
+                    a.getAvailableCapacityTon(),
+                    a.getStatus().name()
             );
         }).collect(Collectors.toList());
     }

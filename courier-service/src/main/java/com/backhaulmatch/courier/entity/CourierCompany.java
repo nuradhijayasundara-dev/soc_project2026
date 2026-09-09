@@ -25,11 +25,21 @@ public class CourierCompany {
     private String contactPhone;
     private String address;
 
+    // Admin approval workflow: new companies start PENDING and stay that way
+    // until an admin approves them via the Admin Portal.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", nullable = false)
+    private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public enum ApprovalStatus {
+        PENDING, APPROVED, REJECTED
     }
 }
