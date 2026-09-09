@@ -1,0 +1,14 @@
+com\backhaulmatch\gps\controller\GpsController.class
+com\backhaulmatch\gps\entity\GpsTrackingHistory.class
+com\backhaulmatch\gps\GpsServiceApplication.class
+com\backhaulmatch\gps\dto\GpsDtos.class
+com\backhaulmatch\gps\entity\LiveGpsLocation.class
+com\backhaulmatch\gps\service\GpsAccessService.class
+com\backhaulmatch\gps\repository\GpsTrackingHistoryRepository.class
+com\backhaulmatch\gps\service\GpsTrackingService.class
+com\backhaulmatch\gps\client\CourierServiceClient.class
+com\backhaulmatch\gps\config\RestTemplateConfig.class
+com\backhaulmatch\gps\dto\GpsDtos$LiveLocationsRequest.class
+com\backhaulmatch\gps\client\FleetServiceClient.class
+com\backhaulmatch\gps\repository\LiveGpsLocationRepository.class
+com\backhaulmatch\gps\dto\GpsDtos$LocationUpdateRequest.class
