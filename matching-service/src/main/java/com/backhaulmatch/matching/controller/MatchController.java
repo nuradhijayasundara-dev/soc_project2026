@@ -1,0 +1,80 @@
+package com.backhaulmatch.matching.controller;
+
+import com.backhaulmatch.matching.dto.MatchingDtos.CreateMatchRequestDto;
+import com.backhaulmatch.matching.entity.MatchRequest;
+import com.backhaulmatch.matching.entity.MatchResult;
+import com.backhaulmatch.matching.service.MatchingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/matching")
+@RequiredArgsConstructor
+public class MatchController {
+
+    private final MatchingService matchingService;
+
+    // Courier Portal's "Request Backhaul Transport" button
+    @PostMapping("/requests")
+    public ResponseEntity<MatchRequest> createRequest(@RequestHeader("X-User-Id") Long userId,
+                                                        @Valid @RequestBody CreateMatchRequestDto request) {
+        return ResponseEntity.ok(matchingService.createAndRun(request.shipmentId(), userId));
+    }
+
+    @GetMapping("/requests/{id}")
+    public ResponseEntity<MatchRequest> getRequest(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.getRequest(id));
+    }
+
+    // "Try Again" on a NO_MATCH / still-searching screen —
+    // re-runs the engine for the same shipment without recreating it.
+    @PostMapping("/requests/{id}/rerun")
+    public ResponseEntity<MatchRequest> rerun(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.rerun(id, userId));
+    }
+
+    // Waiting-for-Match trigger: called by fleet-service the instant a fleet
+    // manager publishes new availability, so every WAITING_FOR_MATCH shipment
+    // is immediately reconsidered against the new truck. Also hit by the
+    // scheduled poller's fallback. Returns how many shipments just matched.
+    @PostMapping("/waiting/recheck")
+    public ResponseEntity<Integer> recheckWaiting() {
+        return ResponseEntity.ok(matchingService.recheckWaitingMatches());
+    }
+
+    // "4. MATCH RESULTS INTERFACE" — the ranked list of candidate trucks
+    @GetMapping("/requests/{id}/results")
+    public ResponseEntity<List<MatchResult>> getResults(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.getResults(id));
+    }
+
+    // "Courier Accepts" — Member 2's Accept Match button. Verifies + reserves
+    // truck capacity immediately (see MatchingService.acceptMatch) and notifies
+    // the fleet manager. Status becomes PENDING_CONFIRMATION.
+    @PostMapping("/results/{id}/accept-match")
+    public ResponseEntity<MatchResult> acceptMatch(@PathVariable Long id, @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.acceptMatch(id, userId));
+    }
+
+    // Fleet Portal's "Booking Requests" page — everything awaiting this fleet manager's decision
+    @GetMapping("/bookings/pending")
+    public ResponseEntity<List<MatchResult>> getPendingBookings(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(matchingService.getPendingBookingsForUser(userId));
+    }
+
+    // Step 2a: fleet manager accepts -> "Booking accepted" notification to the courier
+    @PostMapping("/results/{id}/accept")
+    public ResponseEntity<MatchResult> accept(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.acceptBooking(id));
+    }
+
+    // Step 2b: fleet manager declines -> "Booking rejected" notification to the courier
+    @PostMapping("/results/{id}/reject")
+    public ResponseEntity<MatchResult> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(matchingService.rejectBooking(id));
+    }
+}
