@@ -10,5 +10,7 @@ export const getMatchRequest = (requestId) =>
 export const getMatchResults = (requestId) =>
   apiClient.get(`/matching/requests/${requestId}/results`).then((r) => r.data);
 
-export const selectMatchResult = (resultId) =>
-  apiClient.post(`/matching/results/${resultId}/select`).then((r) => r.data);
+// "Accept Match" button — verifies + reserves the truck's capacity immediately,
+// then sends the booking request to the fleet manager for confirmation
+export const acceptMatch = (resultId) =>
+  apiClient.post(`/matching/results/${resultId}/accept-match`).then((r) => r.data);

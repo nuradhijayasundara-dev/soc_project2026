@@ -7,16 +7,23 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import PersonIcon from '@mui/icons-material/Person';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { logout } from '../api/authApi';
+import NotificationBell from './NotificationBell';
 
 const drawerWidth = 220;
 
 const NAV_ITEMS = [
   { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Trucks', path: '/trucks', icon: <LocalShippingIcon /> },
+  { label: 'Drivers', path: '/drivers', icon: <PersonIcon /> },
+  { label: 'Trips', path: '/trips', icon: <AltRouteIcon /> },
   { label: 'Availability', path: '/availability', icon: <EventAvailableIcon /> },
+  { label: 'Bookings', path: '/bookings', icon: <AssignmentTurnedInIcon /> },
   { label: 'GPS Tracking', path: '/gps', icon: <GpsFixedIcon /> },
 ];
 
@@ -34,9 +41,12 @@ export default function Layout() {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" noWrap>Backhaul-Match — Fleet Management</Typography>
-          <IconButton color="inherit" onClick={handleLogout} title="Logout">
-            <LogoutIcon fontSize="small" />
-          </IconButton>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <NotificationBell />
+            <IconButton color="inherit" onClick={handleLogout} title="Logout">
+              <LogoutIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
