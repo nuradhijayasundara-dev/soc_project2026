@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Table, TableHead, TableRow, TableCell, TableBody,
-  Paper, Chip, CircularProgress,
+  Paper, Chip, CircularProgress, Button,
 } from '@mui/material';
 import { getShipments } from '../api/shipmentApi';
 
@@ -11,6 +12,7 @@ const statusColor = {
 };
 
 export default function ShipmentList() {
+  const navigate = useNavigate();
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,7 +26,10 @@ export default function ShipmentList() {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={700} gutterBottom>Shipments</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5" fontWeight={700}>Shipments</Typography>
+        <Button variant="contained" onClick={() => navigate('/requests')}>New Shipment Request</Button>
+      </Box>
 
       {loading && <CircularProgress />}
       {error && <Typography color="error">{error}</Typography>}
@@ -45,7 +50,12 @@ export default function ShipmentList() {
               {shipments.length === 0 ? (
                 <TableRow><TableCell colSpan={5}>No shipments yet.</TableCell></TableRow>
               ) : shipments.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow
+                  key={s.id}
+                  hover
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/shipments/${s.id}`)}
+                >
                   <TableCell>{s.shipmentCode}</TableCell>
                   <TableCell>{s.pickupLocation}</TableCell>
                   <TableCell>{s.destination}</TableCell>

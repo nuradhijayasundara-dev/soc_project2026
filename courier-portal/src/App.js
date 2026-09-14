@@ -8,6 +8,7 @@ import ShipmentList from './pages/ShipmentList';
 import ShipmentCreate from './pages/ShipmentCreate';
 import ShipmentDetails from './pages/ShipmentDetails';
 import Customers from './pages/Customers';
+import Tracking from './pages/Tracking';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/shipments" element={<ShipmentList />} />
           <Route path="/shipments/:id" element={<ShipmentDetails />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/tracking" element={<Tracking />} />
           <Route path="/invoices" element={<div>Invoices &amp; Payments screen goes here</div>} />
         </Route>
 

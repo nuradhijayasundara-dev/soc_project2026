@@ -8,6 +8,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import PeopleIcon from '@mui/icons-material/People';
+import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { logout } from '../api/authApi';
 
@@ -17,6 +19,8 @@ const NAV_ITEMS = [
   { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon /> },
   { label: 'Requests', path: '/requests', icon: <ListAltIcon /> },
   { label: 'Shipments', path: '/shipments', icon: <LocalShippingIcon /> },
+  { label: 'Tracking', path: '/tracking', icon: <GpsFixedIcon /> },
+  { label: 'Customers', path: '/customers', icon: <PeopleIcon /> },
   { label: 'Invoices', path: '/invoices', icon: <ReceiptIcon /> },
 ];
 
