@@ -1,1 +1,0 @@
-# soc_project2026
