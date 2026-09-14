@@ -1,5 +1,0 @@
-com\backhaulmatch\user\entity\UserProfile.class
-com\backhaulmatch\user\controller\UserProfileController.class
-com\backhaulmatch\user\repository\UserProfileRepository.class
-com\backhaulmatch\user\UserServiceApplication.class
-com\backhaulmatch\user\service\UserProfileService.class
